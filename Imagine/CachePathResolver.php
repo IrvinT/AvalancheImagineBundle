@@ -4,6 +4,7 @@ namespace Avalanche\Bundle\ImagineBundle\Imagine;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class CachePathResolver
 {
@@ -11,7 +12,7 @@ class CachePathResolver
      * @var string
      */
     private $webRoot;
-    
+
     /**
      * @var string
      */
@@ -43,7 +44,7 @@ class CachePathResolver
      * @param string $filter
      * @param boolean $absolute
      */
-    public function getBrowserPath($path, $filter, $absolute = false)
+    public function getBrowserPath($path, $filter, $absolute = UrlGeneratorInterface::RELATIVE_PATH)
     {
         // identify if current path is not under specified source root and return
         // unmodified path in that case
@@ -53,6 +54,15 @@ class CachePathResolver
             return $path;
         }
 
+        switch ($absolute) {
+            case true:
+                $absolute = UrlGeneratorInterface::ABSOLUTE_URL;
+                break;
+            case false:
+                $absolute = UrlGeneratorInterface::RELATIVE_PATH;
+                break;
+        }
+
         $path = str_replace(
             urlencode(ltrim($path, '/')),
             urldecode(ltrim($path, '/')),
@@ -60,7 +70,7 @@ class CachePathResolver
                 'path' => ltrim($path, '/')
             ), $absolute)
         );
-        
+
         $cached = realpath($this->webRoot.$path);
 
         if (file_exists($cached) && !is_dir($cached) && filemtime($realPath) > filemtime($cached)) {
